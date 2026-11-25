@@ -1,7 +1,87 @@
+# Movie Rating Prediction Project
+
+<div dir="rtl">
+
+**תקציר:** חלק ב' של פרויקט כריית נתונים (שנה ג'). ניקוי והכנת נתוני סרטים, הנדסת פיצ'רים ובניית Pipelines של **Elastic Net** ו-**Random Forest** לחיזוי דירוג IMDb של סרט מנתונים הידועים לפני יציאתו. כולל ניתוח שגיאות, ניתוח הוגנות לפי ז'אנר ועשור, וחשיבות פיצ'רים.
+
+</div>
 
 ---
 
-# Movie Rating Prediction Project
+> **Project series:** [Part 1 – Data collection](https://github.com/roeiraz12/Data-minning-project---3rd-year) → **Part 2 – Rating prediction (this repo)** → [Part 3 – Prediction web app](https://github.com/roeiraz12/Data-minning-project---3rd-year-part_3)
+
+## Overview
+
+Part 2 of a third-year Data Mining course project. The task is to predict a movie's average IMDb rating (`averageRating`) using only information that exists before the movie is released, so post-release columns such as `numVotes` and box office are dropped to prevent data leakage. A single `prepare_data()` function turns the raw movie CSV into model-ready features, and two scikit-learn pipelines – a linear model (Elastic Net) and a tree ensemble (Random Forest) – are trained, cross-validated and compared.
+
+## What was done
+
+1. **Data preparation (`prepare_data`)**
+   - Joins directors and writers from the IMDb `title.crew` table on `tconst`.
+   - Converts budget text to US dollars (currency symbols such as £, €, ₹, ¥ and units such as million, billion, crore, lakh).
+   - Cleans text (Latin letters and digits only, lowercase, invisible characters removed) and unifies the many spellings of missing values (`n/a`, `none`, `-`, …).
+   - Treats start years before 1900 as missing.
+   - Splits list columns into separate features: `actor_1`–`actor_5`, `writer_1`–`writer_2`, `genre_1`–`genre_3`, first director.
+2. **Feature engineering** – five custom features:
+   - number of actors × number of genres,
+   - runtime between 120 and 140 minutes (binary),
+   - budget above $5M and released after 1970 (binary),
+   - runtime divided by the first feature,
+   - no information on both lead actor and lead writer (binary).
+3. **Feature selection** – a fixed set of 20 features chosen with **Boruta**.
+4. **Pipelines** – 80/20 train/test split; `ColumnTransformer` with mean/median imputation + `StandardScaler` for numeric columns and most-frequent imputation (with missing indicators) + `OneHotEncoder` (`min_frequency=20`) for categorical columns.
+   - `ElasticNet(alpha=0.001, l1_ratio=0.1)`
+   - `RandomForestRegressor(n_estimators=100, max_leaf_nodes=25, min_samples_leaf=15)`
+5. **Evaluation** – K-fold cross-validation on the training set with R², adjusted R², MAE and RMSE.
+6. **Error analysis** – the 10 largest over- and under-predictions of each model.
+7. **Fairness analysis** – MAE/RMSE for the five most common genres and for each decade from the 1950s.
+8. **Feature importance** – top Elastic Net coefficients and top Random Forest importances.
+
+## Tech stack
+
+Python · Jupyter Notebook · pandas · NumPy · scikit-learn · Boruta · matplotlib · seaborn
+
+## Results
+
+Cross-validation results on the training set, from the notebook output:
+
+| Model | R² | Adj. R² | MAE | RMSE |
+|---|---|---|---|---|
+| **Elastic Net** | **0.2511** | **0.2481** | **0.8551** | **1.1200** |
+| Random Forest | 0.2320 | 0.2288 | 0.8702 | 1.1342 |
+
+Elastic Net did slightly better on every metric. The output is labelled "10-Fold", but the code uses `KFold(n_splits=5)`.
+
+**Findings**
+
+- **Genre matters most.** In both models the strongest signals are genre values: documentary pushes the predicted rating up (largest Elastic Net coefficient, +1.25 for `genre_1 = documentary`) and horror pushes it down (−1.02). In the Random Forest, `genre_1 = documentary` (0.307), `genre_1 = horror` (0.200) and runtime (0.163) are the top importances.
+- **Error grows for newer movies.** Elastic Net RMSE rises from 0.89 for 1950s movies to 1.24 for 2020s movies.
+- **Error differs by genre.** Among the five most common genres, Elastic Net RMSE is lowest for romance (1.01) and highest for action (1.24).
+- **Hardest cases** are movies with extreme ratings (around 1 or above 9), which the models rarely see in training.
+
+![RMSE by decade for Elastic Net and Random Forest](docs/rmse_by_decade.png)
+
+## Repository structure
+
+| File | Description |
+|---|---|
+| `Notebook.ipynb` | Full workflow: data preparation, feature engineering, pipelines, cross-validation, error, fairness and feature-importance analysis |
+| `report.docx` | Project report (Hebrew): column descriptions, design decisions, feature motivation, error analysis |
+| `model.pkl` | Saved scikit-learn pipeline (a `HistGradientBoostingRegressor`), also used by the Part 3 web app |
+| `reqirement_part2.txt` | Pinned Python environment |
+| `docs/rmse_by_decade.png` | Chart from the notebook's fairness analysis |
+
+## How to run
+
+1. Install the dependencies: `pip install -r reqirement_part2.txt` (the list is pinned to the original Windows/Anaconda environment; installing `pandas scikit-learn Boruta ppscore matplotlib seaborn jupyter` is usually enough).
+2. Put `dataset.csv` (the movie dataset; not included in this repo) and `title.crew.tsv.gz` from <https://developer.imdb.com/non-commercial-datasets/> next to the notebook.
+3. Open `Notebook.ipynb` and run all cells.
+
+---
+
+<div dir="rtl">
+
+## פרטים נוספים
 
 ## 🎬 Overview
 
@@ -36,7 +116,10 @@
 ## 📦 Dependencies & Environment
 
 הפרויקט מבוסס על הסביבה המפורטת להלן. ניתן להתקין את כל התלויות באמצעות הפקודה:
-`pip install -r requirements.txt`
+`pip install -r reqirement_part2.txt`
+
+<details>
+<summary>רשימת הספריות המלאה</summary>
 
 ```text
 asttokens==3.0.1
@@ -119,6 +202,10 @@ win_inet_pton==1.1.0
 
 ```
 
+</details>
+
 ---
 
 *פרויקט זה פותח כחלק מקורס Data Mining, שנה ג'.*
+
+</div>

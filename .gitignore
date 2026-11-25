@@ -1,0 +1,7 @@
+__pycache__/
+.ipynb_checkpoints/
+venv/
+.venv/
+
+# Large IMDb source files (download separately)
+*.tsv.gz
