@@ -1,4 +1,6 @@
-# Movie Rating Prediction Project
+# IMDb Rating Prediction
+
+> **IMDb rating project series:** [Part 1: Dataset scraping](https://github.com/roeiraz12/imdb-dataset-scraping) · **Part 2: Rating prediction** (this repo) · [Part 3: Predictor web app](https://github.com/roeiraz12/imdb-rating-predictor-app)
 
 <div dir="rtl">
 
@@ -8,11 +10,20 @@
 
 ---
 
-> **Project series:** [Part 1 – Data collection](https://github.com/roeiraz12/Data-minning-project---3rd-year) → **Part 2 – Rating prediction (this repo)** → [Part 3 – Prediction web app](https://github.com/roeiraz12/Data-minning-project---3rd-year-part_3)
-
 ## Overview
 
 Part 2 of a third-year Data Mining course project. The task is to predict a movie's average IMDb rating (`averageRating`) using only information that exists before the movie is released, so post-release columns such as `numVotes` and box office are dropped to prevent data leakage. A single `prepare_data()` function turns the raw movie CSV into model-ready features, and two scikit-learn pipelines – a linear model (Elastic Net) and a tree ensemble (Random Forest) – are trained, cross-validated and compared.
+
+## Project story
+
+- **Problem.** Can a movie's IMDb rating be estimated before release, from information such as genre, runtime,
+  budget, cast and writers, without post-release signals like vote counts or box office?
+- **Approach.** One `prepare_data()` function for cleaning and feature engineering, Boruta for feature selection,
+  and two scikit-learn pipelines (a linear Elastic Net and a Random Forest) compared with K-fold cross-validation,
+  followed by error, fairness and feature-importance analysis.
+- **Context and role.** Academic data-science project for a third-year Data Mining course. This repository
+  covers the modeling stage; the dataset comes from [Part 1](https://github.com/roeiraz12/imdb-dataset-scraping)
+  and the saved model is served by the [Part 3 web app](https://github.com/roeiraz12/imdb-rating-predictor-app).
 
 ## What was done
 
@@ -76,6 +87,15 @@ Elastic Net did slightly better on every metric. The output is labelled "10-Fold
 1. Install the dependencies: `pip install -r reqirement_part2.txt` (the list is pinned to the original Windows/Anaconda environment; installing `pandas scikit-learn Boruta ppscore matplotlib seaborn jupyter` is usually enough).
 2. Put `dataset.csv` (the movie dataset; not included in this repo) and `title.crew.tsv.gz` from <https://developer.imdb.com/non-commercial-datasets/> next to the notebook.
 3. Open `Notebook.ipynb` and run all cells.
+
+## What I'd do next
+
+- Add text features from the plot (TF-IDF or sentence embeddings), which Part 1 collected but this model does not use.
+- Replace one-hot encoding of actors, writers and directors with target or frequency encoding, since most people
+  appear in only a few movies.
+- Tune hyperparameters with nested cross-validation and report the held-out test-set score next to the CV results.
+- Compare gradient boosting (the model saved in `model.pkl`) with the two models in the same evaluation table.
+- Ship the input dataset, or a script that rebuilds it, so the notebook runs end-to-end from the repository.
 
 ---
 
